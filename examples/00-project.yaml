@@ -1,0 +1,7 @@
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  labels:
+    kubernetes.io/metadata.name: ex-device-plugin
+    security.openshift.io/scc.podSecurityLabelSync: "true"
+  name: ex-device-plugin

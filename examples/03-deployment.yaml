@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ex-device-plugin
+  namespace: ex-device-plugin
+  labels:
+    app: ex-device-plugin
+spec:
+  selector:
+    matchLabels:
+      app: ex-device-plugin
+  template:
+    metadata:
+      labels:
+        app: ex-device-plugin
+    spec:
+      containers:
+      - name: plugin
+        image: quay.io/powercloud/ocp4-power-workload-tools:main
+        imagePullPolicy: IfNotPresent
+        command: [ "/bin/sleep" ]
+        args: [ "infinity" ]
+        resources:
+          limits:
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+            #power-dev-plugin/dev: 1
+        serviceAccount: ex-sa
+        serviceAccountName: ex-sa
+        securityContext:
+          privileged: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+      serviceAccount: ex-sa
+      serviceAccountName: ex-sa
+  updateStrategy:
+    type: RollingUpdate
