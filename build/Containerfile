@@ -5,6 +5,7 @@ WORKDIR /workspace
 RUN dnf install -y util-linux
 
 COPY . .
+RUN find . 
 
 RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
     go build ${BUILD_FLAGS} \

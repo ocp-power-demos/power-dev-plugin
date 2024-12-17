@@ -32,9 +32,9 @@ clean:
 
 .PHONY: image
 image:
-	$(CONTAINER_RUNTIME) build buildx \
+	$(CONTAINER_RUNTIME) buildx build \
 		-t $(REGISTRY)/$(REPOSITORY):$(TAG) \
-		--platform linux/$(ARCH) -f build/Containerfile
+		--platform linux/$(ARCH) -f build/Containerfile .
 
 .PHONY: push
 push:
