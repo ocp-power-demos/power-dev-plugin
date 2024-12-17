@@ -1,0 +1,28 @@
+# Go Lang: 1.22.7-1733160835 - see https://catalog.redhat.com/software/containers/ubi9/go-toolset/61e5c00b4ec9945c18787690?architecture=ppc64le&image=674dff9a3f62d351ea493a68
+FROM registry.redhat.io/ubi9/go-toolset:9.5-1733160835 as builder
+USER root
+WORKDIR /workspace
+RUN dnf install -y util-linux
+
+COPY . .
+
+RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
+    go build ${BUILD_FLAGS} \
+    -tags strictfipsruntime -a -o bin/power-dev-plugin ./cmd/power-dev-plugin
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
+
+RUN microdnf -y update && microdnf install pciutils -y && microdnf clean all
+WORKDIR /
+
+LABEL io.k8s.display-name="IBM Power Device Plugin"
+LABEL name="IBM Power Device Plugin"
+LABEL vendor="IBM"
+LABEL version="1.0.0"
+LABEL release="N/A"
+LABEL summary="Automate the management and monitoring of addition of specific devices to a Pod."
+LABEL description="Automate the management and monitoring of addition of specific devices to a Pod."
+
+COPY ./build/entrypoint.sh /
+COPY --from=builder /workspace/bin/power-dev-plugin /opt/power-dev-plugin/bin/
+ENTRYPOINT ["/entrypoint.sh"]

@@ -12,6 +12,8 @@
 !examples/*.yaml
 !manifests/*.yaml
 !Makefile
+!build/Containerfile
+!build/entrypoint.sh
 
 # !Makefile
 

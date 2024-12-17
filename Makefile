@@ -3,23 +3,51 @@ ARCH ?= arm64
 
 REGISTRY ?= quay.io/powercloud
 REPOSITORY ?= power-dev-plugin
+TAG ?= latest
 
-build-image:
-	+@podman build --platform linux/${ARCH} -t ${REGISTRY}:latest -f Containerfile
-.PHONY: build-image
+CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 
-build: fmt vet
-	go build -o bin/power-dev-plugin cmd/webhook/main.go
+########################################################################
+# Go Targets
+
 .PHONY: build
+build: fmt vet
+	go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
 
+.PHONY: fmt
 fmt:
 	go fmt ./...
-.PHONY: fmt
 
+.PHONY: vet
 vet:
 	go vet ./...
-.PHONY: vet
 
-clean:
-	$(RM) ./bin/power-dev-plugin
 .PHONY: clean
+clean:
+	rm -f ./bin/power-dev-plugin
+	rm -rf vendor
+
+########################################################################
+# Container Targets
+
+.PHONY: image
+image:
+	$(CONTAINER_RUNTIME) build buildx \
+		-t $(REGISTRY)/$(REPOSITORY):$(TAG) \
+		--platform linux/$(ARCH) -f build/Containerfile
+
+.PHONY: push
+push:
+	$(info push Container image...)
+	$(CONTAINER_RUNTIME) push $(REGISTRY)/$(REPOSITORY):$(TAG)
+
+########################################################################
+# Deployment Targets
+
+.PHONY: dep-plugin
+dep-plugin:
+	kustomize build manifests | oc apply -f -
+
+.PHONY: dep-examples
+dep-examples:
+	kustomize build examples | oc apply -f -
