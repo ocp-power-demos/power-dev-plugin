@@ -1,5 +1,4 @@
-# Go Lang: 1.22.7-1733160835 - see https://catalog.redhat.com/software/containers/ubi9/go-toolset/61e5c00b4ec9945c18787690?architecture=ppc64le&image=674dff9a3f62d351ea493a68
-FROM registry.redhat.io/ubi9/ubi:9.4 as builder
+FROM registry.access.redhat.com/ubi9/ubi:9.4 as builder
 USER root
 WORKDIR /workspace
 
