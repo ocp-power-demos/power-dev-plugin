@@ -27,10 +27,10 @@ spec:
       #   effect: NoSchedule
       containers:
       - name: plugin
-        image: quay.io/powercloud/ocp4-power-workload-tools:main
+        image: quay.io/powercloud/power-dev-plugin:main
         imagePullPolicy: IfNotPresent
-        command: [ "/bin/sleep" ]
-        args: [ "infinity" ]
+        command: [ "/opt/power-dev-plugin/bin/power-dev-plugin" ]
+        #args: [ "infinity" ]
         env:
         - name: GHW_CHROOT
           value: "/host/dev"
@@ -46,8 +46,8 @@ spec:
         volumeMounts:
         - name: host-sys
           mountPath: /host/sys
-        - name: host-dev-plugins
-          mountPath: /host/var/lib/kubelet/device-plugins
+        - name: dev-plugins
+          mountPath: /var/lib/kubelet/plugins_registry
         serviceAccount: dev-device-plugin
         serviceAccountName: dev-device-plugin
         securityContext:
@@ -69,9 +69,9 @@ spec:
          hostPath:
            path: /sys
            type: Directory
-       - name: host-dev-plugins
+       - name: dev-plugins
          hostPath:
-           path: /var/lib/kubelet/device-plugins
+           path: /var/lib/kubelet/plugins_registry
            type: Directory
       priorityClassName: system-node-critical
       hostPID: true

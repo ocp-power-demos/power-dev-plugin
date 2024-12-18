@@ -18,7 +18,9 @@ import (
 
 const (
 	resourceName = "ibm.com/power-dev"
-	serverSock   = pluginapi.DevicePluginPath + "power-dev.sock"
+	// SockDir is the default Kubelet device plugin socket directory
+	SockDir    = "/var/lib/kubelet/plugins_registry"
+	serverSock = SockDir + "/power-dev.sock"
 )
 
 // DevicePluginServer is a mandatory interface that must be implemented by all plugins.
