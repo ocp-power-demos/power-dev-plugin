@@ -12,10 +12,14 @@
 !examples/*.yaml
 !manifests/*.yaml
 !Makefile
+
+# Image
 !build/Containerfile
 !build/entrypoint.sh
 
-# !Makefile
+# Workflows
+!.github/dependabot.yml
+!.github/workflows/publish.yaml
 
 # ...even if they are in subdirectories
 !*/
