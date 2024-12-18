@@ -77,7 +77,7 @@ spec:
       hostPID: true
       hostIPC: true
       hostNetwork: true
-      serviceAccount: dev-device-plugin
-      serviceAccountName: dev-device-plugin
+      serviceAccount: power-device-plugin
+      serviceAccountName: power-device-plugin
   updateStrategy:
     type: RollingUpdate
