@@ -23,10 +23,11 @@ spec:
         resources:
           limits:
             memory: 100Mi
+            power-dev-plugin/dev: 1
           requests:
             cpu: 100m
             memory: 100Mi
-            #power-dev-plugin/dev: 1
+            power-dev-plugin/dev: 1
         serviceAccount: ex-sa
         serviceAccountName: ex-sa
         securityContext:

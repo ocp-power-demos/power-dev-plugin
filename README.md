@@ -8,3 +8,8 @@ https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device
 
 
 1. To deploy the sample: `kustomize build examples | oc apply -f -`
+
+
+
+https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/pkg/deviceplugin/manager.go#L96
+https://github.com/kairen/simple-device-plugin/tree/master

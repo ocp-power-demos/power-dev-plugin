@@ -30,6 +30,9 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "/bin/sleep" ]
         args: [ "infinity" ]
+        env:
+        - name: GHW_CHROOT
+          value: "/host/dev"
         resources:
           limits:
             memory: 100Mi
