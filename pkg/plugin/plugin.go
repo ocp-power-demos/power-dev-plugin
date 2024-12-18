@@ -52,7 +52,10 @@ func New() (*PowerPlugin, error) {
 
 // no-action needed to get options
 func (m *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
-	return &pluginapi.DevicePluginOptions{}, nil
+	return &pluginapi.DevicePluginOptions{
+		PreStartRequired:                false,
+		GetPreferredAllocationAvailable: false,
+	}, nil
 }
 
 // dial establishes the gRPC communication with the registered device plugin.
