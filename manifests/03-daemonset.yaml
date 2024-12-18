@@ -17,13 +17,14 @@ spec:
       labels:
         app: power-device-plugin
     spec:
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-        effect: NoSchedule
-      - key: node-role.kubernetes.io/master
-        operator: Exists
-        effect: NoSchedule
+      # Dev: we're only installing on workers.
+      # tolerations:
+      # - key: node-role.kubernetes.io/control-plane
+      #   operator: Exists
+      #   effect: NoSchedule
+      # - key: node-role.kubernetes.io/master
+      #   operator: Exists
+      #   effect: NoSchedule
       containers:
       - name: plugin
         image: quay.io/powercloud/ocp4-power-workload-tools:main

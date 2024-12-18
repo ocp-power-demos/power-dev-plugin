@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -20,6 +21,9 @@ const (
 	serverSock   = pluginapi.DevicePluginPath + "power-dev.sock"
 )
 
+// DevicePluginServer is a mandatory interface that must be implemented by all plugins.
+// For more information see
+// https://godoc.org/k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta#DevicePluginServer
 type PowerPlugin struct {
 	devs   []*string
 	socket string
@@ -28,6 +32,8 @@ type PowerPlugin struct {
 	health chan *pluginapi.Device
 
 	server *grpc.Server
+
+	p pluginapi.DevicePluginServer
 }
 
 // Creates a Plugin
@@ -42,6 +48,7 @@ func New() (*PowerPlugin, error) {
 	}, nil
 }
 
+// no-action needed to get options
 func (m *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
 	return &pluginapi.DevicePluginOptions{}, nil
 }
@@ -75,7 +82,7 @@ func (m *PowerPlugin) Start() error {
 	}
 
 	m.server = grpc.NewServer([]grpc.ServerOption{}...)
-	pluginapi.RegisterDevicePluginServer(m.server, m)
+	pluginapi.RegisterDevicePluginServer(m.server, m.p)
 
 	go m.server.Serve(sock)
 
@@ -103,7 +110,7 @@ func (m *PowerPlugin) Stop() error {
 	return m.cleanup()
 }
 
-// Register registers the device plugin for the given resourceName with Kubelet.
+// Registers the device plugin for the given resourceName with Kubelet.
 func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	conn, err := dial(kubeletEndpoint, 5*time.Second)
 	if err != nil {
@@ -126,10 +133,10 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	return nil
 }
 
-// ListAndWatch lists devices and update that list according to the health status
+// Lists devices and update that list according to the health status
 func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
 	klog.Infof("Exposing devices: %v", m.devs)
-	s.Send(&pluginapi.ListAndWatchResponse{Devices: m.devs})
+	s.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
 
 	for {
 		select {
@@ -138,7 +145,7 @@ func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_
 		case d := <-m.health:
 			// FIXME: there is no way to recover from the Unhealthy state.
 			d.Health = pluginapi.Unhealthy
-			s.Send(&pluginapi.ListAndWatchResponse{Devices: m.devs})
+			s.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
 		}
 	}
 }
@@ -167,7 +174,8 @@ func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequ
 				// Cgroups permissions of the device, candidates are one or more of
 				// * r - allows container to read from the specified device.
 				// * w - allows container to write to the specified device.
-				// * m - allows container to create device files that do not yet exist. We don't need this...
+				// * m - allows container to create device files that do not yet exist.
+				// We don't need `m`
 				Permissions: "rw",
 			}
 		}
@@ -177,10 +185,22 @@ func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequ
 	return &responses, nil
 }
 
+func convertDeviceToPluginDevices(devS []*string) []*pluginapi.Device {
+	devs := []*pluginapi.Device{}
+	for idx := range devS {
+		devs = append(devs, &pluginapi.Device{
+			ID:     strconv.Itoa(idx),
+			Health: "healthy",
+		})
+	}
+	return devs
+}
+
 func (m *PowerPlugin) unhealthy(dev *pluginapi.Device) {
 	m.health <- dev
 }
 
+// no-action needed to configure/load et cetra
 func (m *PowerPlugin) PreStartContainer(context.Context, *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
 	return &pluginapi.PreStartContainerResponse{}, nil
 }
