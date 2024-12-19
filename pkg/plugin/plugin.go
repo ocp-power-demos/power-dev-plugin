@@ -2,16 +2,16 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
-	"path"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/jaypipes/ghw"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
@@ -20,7 +20,9 @@ const (
 	resourceName = "ibm.com/power-dev"
 	// SockDir is the default Kubelet device plugin socket directory
 	SockDir    = pluginapi.DevicePluginPath
-	serverSock = SockDir + "power-dev.sock"
+	pSocket    = "power-dev.sock"
+	serverSock = SockDir + pSocket
+	unix       = "unix"
 )
 
 // DevicePluginServer is a mandatory interface that must be implemented by all plugins.
@@ -59,15 +61,13 @@ func (m *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) 
 }
 
 // dial establishes the gRPC communication with the registered device plugin.
-func dial(unixSocketPath string, timeout time.Duration) (*grpc.ClientConn, error) {
-	c, err := grpc.Dial(unixSocketPath, grpc.WithInsecure(), grpc.WithBlock(),
-		grpc.WithTimeout(timeout),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
-		}),
+func dial(kubeletEndpoint string) (*grpc.ClientConn, error) {
+	c, err := grpc.NewClient(
+		unix+":"+pluginapi.KubeletSocket,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-
 	if err != nil {
+		klog.Errorf("%s device plugin unable connect to Kubelet : %v", serverSock, err)
 		return nil, err
 	}
 
@@ -83,20 +83,28 @@ func (m *PowerPlugin) Start() error {
 
 	sock, err := net.Listen("unix", m.socket)
 	if err != nil {
+		klog.Errorf("failed to listen on socket: %s", err.Error())
 		return err
 	}
 
-	m.server = grpc.NewServer([]grpc.ServerOption{}...)
+	m.server = grpc.NewServer()
 	pluginapi.RegisterDevicePluginServer(m.server, m.p)
 
-	go m.server.Serve(sock)
+	// start serving from grpcServer
+	go func() {
+		err := m.server.Serve(sock)
+		if err != nil {
+			klog.Errorf("serving incoming requests failed: %s", err.Error())
+		}
+	}()
 
 	// Wait for server to start by launching a blocking connection
-	conn, err := dial(m.socket, 5*time.Second)
-	if err != nil {
-		return err
-	}
-	conn.Close()
+	// conn, err := dial(m.socket, 10*time.Second)
+	// if err != nil {
+	// 	klog.Errorf("unable to dial %v", err)
+	// 	return err
+	// }
+	// conn.Close()
 
 	// go m.healthcheck()
 
@@ -117,20 +125,21 @@ func (m *PowerPlugin) Stop() error {
 
 // Registers the device plugin for the given resourceName with Kubelet.
 func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
-	conn, err := dial(kubeletEndpoint, 5*time.Second)
+	conn, err := dial(kubeletEndpoint)
+	defer conn.Close()
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	klog.Infof("Dial kubelet endpoint %s", conn.Target())
 
 	client := pluginapi.NewRegistrationClient(conn)
-	reqt := &pluginapi.RegisterRequest{
+	request := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
-		Endpoint:     path.Base(m.socket),
-		ResourceName: resourceName,
+		Endpoint:     pSocket,
+		ResourceName: fmt.Sprintf("%s/%s", "power-dev-plugin", "dev"),
 	}
 
-	_, err = client.Register(context.Background(), reqt)
+	_, err = client.Register(context.Background(), request)
 	if err != nil {
 		return err
 	}
