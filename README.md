@@ -20,6 +20,15 @@ clusterrolebinding.rbac.authorization.k8s.io/power-device-plugin created
 daemonset.apps/power-device-plugin created
 ```
 
+To debug the running plugin, you can use: 
+
+```
+export GRPC_GO_LOG_VERBOSITY_LEVEL=99
+export GRPC_GO_LOG_SEVERITY_LEVEL=info
+```
+
+Thse are commented out in the DaemonSet.
+
 ### Sample
 
 1. To deploy the sample: `kustomize build examples | oc apply -f -`

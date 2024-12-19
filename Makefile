@@ -1,5 +1,5 @@
 #Arches can be: amd64 s390x arm64 ppc64le
-ARCH ?= arm64
+ARCH ?= ppc64le
 
 REGISTRY ?= quay.io/powercloud
 REPOSITORY ?= power-dev-plugin
@@ -12,7 +12,7 @@ CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 
 .PHONY: build
 build: fmt vet
-	go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
+	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
 
 .PHONY: fmt
 fmt:

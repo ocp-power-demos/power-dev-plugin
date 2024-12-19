@@ -28,12 +28,16 @@ spec:
       containers:
       - name: plugin
         image: quay.io/powercloud/power-dev-plugin:main
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command: [ "/opt/power-dev-plugin/bin/power-dev-plugin" ]
         #args: [ "infinity" ]
         env:
         - name: GHW_CHROOT
           value: "/host/dev"
+        # - name: GRPC_GO_LOG_VERBOSITY_LEVEL
+        #   value: 99
+        # - name: GRPC_GO_LOG_SEVERITY_LEVEL
+        #   value: info
         resources:
           limits:
             memory: 100Mi
@@ -46,10 +50,12 @@ spec:
         volumeMounts:
         - name: host-sys
           mountPath: /host/sys
-        - name: dev-plugins
+        - name: dev-plugins-reg
           mountPath: /var/lib/kubelet/plugins_registry
-        serviceAccount: dev-device-plugin
-        serviceAccountName: dev-device-plugin
+        - name: dev-plugins
+          mountPath: /var/lib/kubelet/device-plugins
+        serviceAccount: power-device-plugin
+        serviceAccountName: power-device-plugin
         securityContext:
           privileged: true
           capabilities:
@@ -69,9 +75,13 @@ spec:
          hostPath:
            path: /sys
            type: Directory
-       - name: dev-plugins
+       - name: dev-plugins-reg
          hostPath:
            path: /var/lib/kubelet/plugins_registry
+           type: Directory
+       - name: dev-plugins
+         hostPath:
+           path: /var/lib/kubelet/device-plugins
            type: Directory
       priorityClassName: system-node-critical
       hostPID: true
