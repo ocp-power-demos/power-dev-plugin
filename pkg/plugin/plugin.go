@@ -29,7 +29,7 @@ const (
 // For more information see
 // https://godoc.org/k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta#DevicePluginServer
 type PowerPlugin struct {
-	devs   []*string
+	devs   []string
 	socket string
 
 	stop   chan interface{}
@@ -43,7 +43,7 @@ type PowerPlugin struct {
 // Creates a Plugin
 func New() (*PowerPlugin, error) {
 	// Empty array to start.
-	var devs []*string = []*string{}
+	var devs []string = []string{}
 	return &PowerPlugin{
 		devs:   devs,
 		socket: serverSock,
@@ -61,7 +61,7 @@ func (m *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) 
 }
 
 // dial establishes the gRPC communication with the registered device plugin.
-func dial(kubeletEndpoint string) (*grpc.ClientConn, error) {
+func dial() (*grpc.ClientConn, error) {
 	c, err := grpc.NewClient(
 		unix+":"+pluginapi.KubeletSocket,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -125,7 +125,7 @@ func (m *PowerPlugin) Stop() error {
 
 // Registers the device plugin for the given resourceName with Kubelet.
 func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
-	conn, err := dial(kubeletEndpoint)
+	conn, err := dial()
 	defer conn.Close()
 	if err != nil {
 		return err
@@ -150,6 +150,16 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 // Lists devices and update that list according to the health status
 func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
 	klog.Infof("Exposing devices: %v", m.devs)
+
+	if len(m.devs) == 0 {
+		devices, err := ScanRootForDevices()
+		if err != nil {
+			klog.Errorf("Scan root for devices was unsuccessful during ListAndWatch: %v", err)
+			return err
+		} else {
+			m.devs = devices
+		}
+	}
 	s.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
 
 	for {
@@ -199,7 +209,8 @@ func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequ
 	return &responses, nil
 }
 
-func convertDeviceToPluginDevices(devS []*string) []*pluginapi.Device {
+func convertDeviceToPluginDevices(devS []string) []*pluginapi.Device {
+	klog.Infoln("Converting Devices to Plugin Devices")
 	devs := []*pluginapi.Device{}
 	for idx := range devS {
 		devs = append(devs, &pluginapi.Device{
@@ -207,6 +218,7 @@ func convertDeviceToPluginDevices(devS []*string) []*pluginapi.Device {
 			Health: "healthy",
 		})
 	}
+	klog.Infoln("Conversion completed")
 	return devs
 }
 
