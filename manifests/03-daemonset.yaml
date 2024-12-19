@@ -31,9 +31,7 @@ spec:
         imagePullPolicy: Always
         command: [ "/opt/power-dev-plugin/bin/power-dev-plugin" ]
         #args: [ "infinity" ]
-        env:
-        - name: GHW_CHROOT
-          value: "/host/dev"
+        #env:
         # - name: GRPC_GO_LOG_VERBOSITY_LEVEL
         #   value: 99
         # - name: GRPC_GO_LOG_SEVERITY_LEVEL
