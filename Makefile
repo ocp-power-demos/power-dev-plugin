@@ -13,6 +13,7 @@ CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 .PHONY: build
 build: fmt vet
 	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
+	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-webhook cmd/webhook/main.go
 
 .PHONY: fmt
 fmt:

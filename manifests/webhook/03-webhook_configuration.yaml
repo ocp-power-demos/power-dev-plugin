@@ -1,0 +1,27 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: power-dev-mutate-webhook-cfg
+  namespace: power-device-plugin
+  labels:
+    app: power-dev-mutate
+webhooks:
+  - name: power-dev-mutate-webhook
+    objectSelector:
+      matchLabels:
+        component: db2wh
+    admissionReviewVersions: [v1beta1, v1]
+    sideEffects: NoneOnDryRun
+    clientConfig:
+      service:
+        name: mutate-webhook-svc
+        namespace: power-device-plugin
+        path: "/mutate"
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: db2

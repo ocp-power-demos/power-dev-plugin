@@ -1,0 +1,36 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "example"
+  },
+  "spec": {
+    "volumes": [
+      {
+        "name": "example-disk",
+        "gcePersistentDisk": {
+          "pdName": "example-disk",
+          "fsType": "ext4"
+        }
+      }
+    ],
+    "containers": [
+      {
+        "name": "example",
+        "image": "example:latest",
+        "ports": [
+          {
+            "name": "example",
+            "containerPort": 27017
+          }
+        ],
+        "volumeMounts": [
+          {
+            "name": "example-disk",
+            "mountPath": "/data/db"
+          }
+        ]
+      }
+    ]
+  }
+}
