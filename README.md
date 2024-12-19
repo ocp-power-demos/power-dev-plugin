@@ -20,6 +20,7 @@ clusterrolebinding.rbac.authorization.k8s.io/power-device-plugin created
 daemonset.apps/power-device-plugin created
 ```
 
+#### Debug DaemonSet
 To debug the running plugin, you can use: 
 
 ```
@@ -28,6 +29,20 @@ export GRPC_GO_LOG_SEVERITY_LEVEL=info
 ```
 
 Thse are commented out in the DaemonSet.
+
+#### Debug Kubelet
+
+You can check the kubelet behavior using:
+
+```
+# journalctl -u kubelet
+...
+ 7446 handler.go:95] "Registered client" name="power-dev-plugin/dev"
+wrapper[7446]: I1219 04:32:20.722778    7446 manager.go:230] "Device plugin connected" resourceName="power-dev-plugin/dev"
+wrapper[7446]: I1219 04:32:20.723559    7446 client.go:93] "State pushed for device plugin" resource="power-dev-plugin/dev" re>
+wrapper[7446]: I1219 04:32:20.726284    7446 manager.go:279] "Processed device updates for resource" resourceName="power-dev-p>
+wrapper[7446]: I1219 04:32:27.293908    7446 setters.go:333] "Updated capacity for device plugin" plugin="power-dev-plugin/dev>
+```
 
 ### Sample
 

@@ -37,7 +37,7 @@ type PowerPlugin struct {
 
 	server *grpc.Server
 
-	p pluginapi.DevicePluginServer
+	pluginapi.DevicePluginServer
 }
 
 // Creates a Plugin
@@ -88,7 +88,7 @@ func (m *PowerPlugin) Start() error {
 	}
 
 	m.server = grpc.NewServer()
-	pluginapi.RegisterDevicePluginServer(m.server, m.p)
+	pluginapi.RegisterDevicePluginServer(m.server, m)
 
 	// start serving from grpcServer
 	go func() {
