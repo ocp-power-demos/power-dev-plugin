@@ -168,7 +168,8 @@ func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePl
 			return nil
 		case d := <-m.health:
 			//ignoring unhealthy state.
-			d.Health = pluginapi.Unhealthy
+			klog.Infoln("Checking the health")
+			d.Health = pluginapi.Healthy
 			stream.Send(&pluginapi.ListAndWatchResponse{Devices: []*pluginapi.Device{}})
 		}
 	}
@@ -215,7 +216,7 @@ func convertDeviceToPluginDevices(devS []string) []*pluginapi.Device {
 	for idx := range devS {
 		devs = append(devs, &pluginapi.Device{
 			ID:     strconv.Itoa(idx),
-			Health: "healthy",
+			Health: pluginapi.Healthy,
 		})
 	}
 	klog.Infoln("Conversion completed")
