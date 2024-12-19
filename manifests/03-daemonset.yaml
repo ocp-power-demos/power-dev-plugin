@@ -28,7 +28,7 @@ spec:
       containers:
       - name: plugin
         image: quay.io/powercloud/power-dev-plugin:main
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command: [ "/opt/power-dev-plugin/bin/power-dev-plugin" ]
         #args: [ "infinity" ]
         #env:
