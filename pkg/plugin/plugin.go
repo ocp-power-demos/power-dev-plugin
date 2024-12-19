@@ -188,13 +188,16 @@ func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequ
 	for _, req := range reqs.ContainerRequests {
 		klog.Infoln("Container requests device: ", req)
 		ds := make([]*pluginapi.DeviceSpec, len(devices))
-		response := pluginapi.ContainerAllocateResponse{Devices: ds}
+
+		response := pluginapi.ContainerAllocateResponse{
+			Devices: ds,
+		}
 
 		// Originally req.DeviceIds
 		for i := range devices {
 			ds[i] = &pluginapi.DeviceSpec{
-				HostPath:      devices[i],
-				ContainerPath: devices[i],
+				HostPath:      "/dev/" + devices[i],
+				ContainerPath: "/dev/" + devices[i],
 				// Per DeviceSpec:
 				// Cgroups permissions of the device, candidates are one or more of
 				// * r - allows container to read from the specified device.
