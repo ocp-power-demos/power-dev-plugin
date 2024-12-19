@@ -148,7 +148,7 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 }
 
 // Lists devices and update that list according to the health status
-func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
+func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
 	klog.Infof("Exposing devices: %v", m.devs)
 
 	if len(m.devs) == 0 {
@@ -160,16 +160,16 @@ func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_
 			m.devs = devices
 		}
 	}
-	s.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
+	stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
 
 	for {
 		select {
 		case <-m.stop:
 			return nil
 		case d := <-m.health:
-			// FIXME: there is no way to recover from the Unhealthy state.
+			//ignoring unhealthy state.
 			d.Health = pluginapi.Unhealthy
-			s.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
+			stream.Send(&pluginapi.ListAndWatchResponse{Devices: []*pluginapi.Device{}})
 		}
 	}
 }
