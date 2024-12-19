@@ -42,6 +42,11 @@ RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
     go build ${BUILD_FLAGS} \
     -tags strictfipsruntime -a -o bin/power-dev-plugin ./cmd/power-dev-plugin
 
+RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
+    go build ${BUILD_FLAGS} \
+    -tags strictfipsruntime -a -o bin/power-dev-webhook ./cmd/webhook
+
+
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
 
 LABEL io.k8s.display-name="IBM Power Device Plugin"
