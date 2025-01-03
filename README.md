@@ -44,6 +44,22 @@ wrapper[7446]: I1219 04:32:20.726284    7446 manager.go:279] "Processed device u
 wrapper[7446]: I1219 04:32:27.293908    7446 setters.go:333] "Updated capacity for device plugin" plugin="power-dev-plugin/dev>
 ```
 
+#### Resource Usage
+
+In practice, the plugin only used around 1m core, and 18mi memory as shown below:
+
+```
+[root@bastion ~]# oc adm top pods -n power-device-plugin
+NAME                               CPU(cores)   MEMORY(bytes)
+power-dev-mutate-c7f8b4689-rfhhf   1m           18Mi
+power-device-plugin-2fsdv          1m           20Mi
+power-device-plugin-jwqmm          1m           20Mi
+power-device-plugin-mkpbv          1m           21Mi
+power-device-plugin-pp4vw          1m           19Mi
+power-device-plugin-x9szk          1m           21Mi
+power-device-plugin-zkxkz          1m           20Mi
+```
+
 ### Sample
 
 1. To deploy the sample: `kustomize build examples | oc apply -f -`

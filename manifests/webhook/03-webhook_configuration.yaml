@@ -6,13 +6,14 @@ metadata:
   labels:
     app: power-dev-mutate
 webhooks:
-  - name: power-dev-mutate-webhook
+  - name: power.ibm.com
     objectSelector:
       matchLabels:
         component: db2wh
     admissionReviewVersions: [v1beta1, v1]
     sideEffects: NoneOnDryRun
     clientConfig:
+      #url: https://mutate-webhook-svc.power-device-plugin.svc:443/mutate
       service:
         name: mutate-webhook-svc
         namespace: power-device-plugin

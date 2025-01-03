@@ -21,9 +21,10 @@ spec:
           imagePullPolicy: Always
           command: [ "/opt/power-dev-plugin/bin/power-dev-webhook" ]
           args:
-            - -cfg-file=/etc/power-dev-mutate/config.yaml
-            - -v=10
             - 2>&1
+          ports:
+          - containerPort: 8080
+            name: http
           volumeMounts:
             - name: power-dev-mutate-config
               mountPath: /etc/power-dev-mutate/
