@@ -12,9 +12,12 @@ RUN microdnf -y update && microdnf install util-linux findutils -y && microdnf c
 WORKDIR /
 
 COPY ./build/entrypoint.sh /
+RUN echo abc
 COPY bin/* /opt/power-dev-plugin/bin/
 
-RUN mv -f /opt/power-dev-plugin/bin/power-dev-plugin-$(arch) /opt/power-dev-plugin/bin/power-dev-plugin \
-    && ls -1 /opt/power-dev-plugin/bin | grep -v $(arch) | xargs rm -f
+# Move the arch plugin to the entrypoint's expected location and remove others
+RUN ls -1 /opt/power-dev-plugin/bin | grep -v $(arch) | xargs -I {} rm -f /opt/power-dev-plugin/bin/{} \
+    && mv -f /opt/power-dev-plugin/bin/power-dev-plugin-$(arch) /opt/power-dev-plugin/bin/power-dev-plugin \
+    && ls -1 /opt/power-dev-plugin/bin/
 
 ENTRYPOINT ["/entrypoint.sh"]
