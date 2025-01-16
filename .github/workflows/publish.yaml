@@ -80,7 +80,7 @@ jobs:
         with:
           context: .
           platforms: linux/ppc64le,linux/amd64,linux/s390x
-          file: build/Containerfile
+          file: build/Containerfile-build
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
