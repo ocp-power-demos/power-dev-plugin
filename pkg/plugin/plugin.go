@@ -313,15 +313,15 @@ func ScanRootForDevices() ([]string, error) {
 	// This may be the best way to get the devices.
 	block, err := ghw.Block()
 	if err != nil {
-		klog.Errorf("Error getting block storage info: %v", err)
+		fmt.Printf("Error getting block storage info: %v", err)
 		return nil, err
 	}
 	devices := []string{}
-	klog.Infof("%v\n", block)
+	fmt.Printf("DEVICE: %v\n", block)
 	for _, disk := range block.Disks {
-		klog.Infof(" %v\n", disk)
+		fmt.Printf("    - DISK: %v\n", disk.Name)
 		for _, part := range disk.Partitions {
-			klog.Infof("  %v\n", part)
+			fmt.Printf("        - PART: %v\n", part.Disk.Name)
 			devices = append(devices, part.Name)
 		}
 	}
