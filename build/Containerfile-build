@@ -1,0 +1,20 @@
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
+
+LABEL io.k8s.display-name="IBM Power Device Plugin"
+LABEL name="IBM Power Device Plugin"
+LABEL vendor="IBM"
+LABEL version="1.0.0"
+LABEL release="N/A"
+LABEL summary="Automate the management and monitoring of addition of specific devices to a Pod."
+LABEL description="Automate the management and monitoring of addition of specific devices to a Pod."
+
+RUN microdnf -y update && microdnf install util-linux findutils -y && microdnf clean all
+WORKDIR /
+
+COPY ./build/entrypoint.sh /
+COPY bin/* /opt/power-dev-plugin/bin/
+
+RUN mv -f /opt/power-dev-plugin/bin/power-dev-plugin-$(arch) /opt/power-dev-plugin/bin/power-dev-plugin \
+    && ls -1 /opt/power-dev-plugin/bin | grep -v $(arch) | xargs rm -f
+
+ENTRYPOINT ["/entrypoint.sh"]

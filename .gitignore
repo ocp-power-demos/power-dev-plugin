@@ -17,6 +17,7 @@
 
 # Image
 !build/Containerfile
+!build/Containerfile-build
 !build/entrypoint.sh
 
 # Workflows
