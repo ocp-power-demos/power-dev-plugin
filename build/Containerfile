@@ -38,14 +38,17 @@ ENV PATH="/root/platform/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/
 
 COPY . .
 
-RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
-    go build ${BUILD_FLAGS} \
-    -tags strictfipsruntime -a -o bin/power-dev-plugin ./cmd/power-dev-plugin
+RUN ARCH=$(arch | sed 's|x86_64|amd64|g' | sed 's|aarch64|arm64|g') \
+        CGO_ENABLED=1 \
+        CGO_CFLAGS=-I/usr/include \
+        CGO_LDFLAGS="-L/lib64" GOOS=linux \
+        go build ${BUILD_FLAGS} -tags strictfipsruntime -a -o bin/power-dev-plugin ./cmd/power-dev-plugin
 
-RUN CGO_ENABLED=1 CGO_CFLAGS=-I/usr/include CGO_LDFLAGS="-L/lib64" GOOS=linux \
-    go build ${BUILD_FLAGS} \
-    -tags strictfipsruntime -a -o bin/power-dev-webhook ./cmd/webhook
-
+RUN ARCH=$(arch | sed 's|x86_64|amd64|g' | sed 's|aarch64|arm64|g') \
+        CGO_ENABLED=1 \
+        CGO_CFLAGS=-I/usr/include \
+        CGO_LDFLAGS="-L/lib64" GOOS=linux \
+        go build ${BUILD_FLAGS} -tags strictfipsruntime -a -o bin/power-dev-webhook ./cmd/webhook
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
 
