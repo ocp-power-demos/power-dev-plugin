@@ -30,6 +30,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # - name: Setup Go 1.23.x
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: '1.23.x'
+      # Eventually we should build inline...
+
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
