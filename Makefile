@@ -15,6 +15,10 @@ build: fmt vet
 	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
 	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-webhook cmd/webhook/main.go
 
+.PHONY: build-scanner
+build-scanner: fmt vet
+	GOOS=linux GOARCH=$(ARCH) go build -o bin/devices-scanner cmd/webhook/main.go
+
 .PHONY: fmt
 fmt:
 	go fmt ./...
