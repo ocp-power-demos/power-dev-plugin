@@ -17,7 +17,7 @@ build: fmt vet
 
 .PHONY: build-scanner
 build-scanner: fmt vet
-	GOOS=linux GOARCH=$(ARCH) go build -o bin/devices-scanner cmd/webhook/main.go
+	GOOS=linux GOARCH=$(ARCH) go build -o bin/devices-scanner cmd/scanner/main.go
 
 .PHONY: fmt
 fmt:

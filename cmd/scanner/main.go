@@ -5,18 +5,17 @@ import (
 	"os"
 
 	"github.com/jaypipes/ghw"
-	"k8s.io/klog"
 )
 
 // Launch the scanner
 func main() {
 	devices, err := ScanRootForDevices()
 	if err != nil {
-		klog.Errorf("Could not scan devices, aborting %s", err)
+		fmt.Printf("Could not scan devices, aborting %s", err)
 		os.Exit(2)
 	}
 	for idx, device := range devices {
-		klog.Infof("%d - %s", idx, device)
+		fmt.Printf("%d - %s", idx, device)
 	}
 }
 
@@ -27,15 +26,15 @@ func ScanRootForDevices() ([]string, error) {
 	// This may be the best way to get the devices.
 	block, err := ghw.Block()
 	if err != nil {
-		klog.Errorf("Error getting block storage info: %v", err)
+		fmt.Printf("Error getting block storage info: %v", err)
 		return nil, err
 	}
 	devices := []string{}
 	fmt.Printf("DEVICE: %v\n", block)
 	for _, disk := range block.Disks {
-		fmt.Printf("    - DISK: %v\n", disk)
+		fmt.Printf("    - DISK: %v\n", disk.Name)
 		for _, part := range disk.Partitions {
-			fmt.Printf("        - PART: %v\n", part)
+			fmt.Printf("        - PART: %v\n", part.Disk.Name)
 			devices = append(devices, part.Name)
 		}
 	}
