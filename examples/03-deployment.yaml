@@ -28,6 +28,9 @@ spec:
             cpu: 100m
             memory: 100Mi
             power-dev-plugin/dev: 1
+        volumeMounts:
+        - name: host-mnt
+          mountPath: /mnt
         serviceAccount: ex-sa
         serviceAccountName: ex-sa
         securityContext:
@@ -36,9 +39,14 @@ spec:
             drop:
               - ALL
           runAsNonRoot: true
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
       serviceAccount: ex-sa
       serviceAccountName: ex-sa
+      volumes:
+       - name: host-mnt
+         hostPath:
+           path: /mnt
+           type: Directory
   updateStrategy:
     type: RollingUpdate
