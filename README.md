@@ -75,3 +75,21 @@ power-device-plugin-zkxkz          1m           20Mi
 
 The build includes multiple architectures: `linux/amd64`, `linux/ppc64le`, `linux/s390x`.
 The build uses the [ubi9/ubi:9.4](https://catalog.redhat.com/software/containers/ubi9/ubi/615bcf606feffc5384e8452e?architecture=ppc64le&image=676258d7607921b4d7fcb8c8&gti-tabs=unauthenticated) image.
+
+## Debug
+
+To debug the socket connection:
+1. Connect to the worker
+``` shell
+ssh core@worker-0
+```
+
+2. Change to Root
+``` shell
+sudo -s
+```
+
+3. Check the socket is live
+``` shell
+nc -U /var/lib/kubelet/device-plugins/power-dev.csi.ibm.com-reg.sock
+```
