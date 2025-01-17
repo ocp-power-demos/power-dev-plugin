@@ -33,9 +33,9 @@ spec:
         #args: [ "infinity" ]
         #env:
         # - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        #   value: 99
+        #   value: "99"
         # - name: GRPC_GO_LOG_SEVERITY_LEVEL
-        #   value: info
+        #   value: "info"
         resources:
           limits:
             memory: 100Mi
