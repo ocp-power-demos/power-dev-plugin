@@ -126,7 +126,7 @@ func (m *PowerPlugin) Stop() error {
 // Registers the device plugin for the given resourceName with Kubelet.
 func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	conn, err := dial()
-	defer conn.Close()
+	//defer conn.Close()
 	if err != nil {
 		return err
 	}
