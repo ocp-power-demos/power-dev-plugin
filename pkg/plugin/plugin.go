@@ -157,9 +157,11 @@ func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePl
 			klog.Errorf("Scan root for devices was unsuccessful during ListAndWatch: %v", err)
 			return err
 		} else {
+			klog.Infof("Updating the devices to: %v", m.devs)
 			m.devs = devices
 		}
 	}
+
 	stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
 
 	for {
