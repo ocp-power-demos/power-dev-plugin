@@ -47,9 +47,20 @@ image:
 		-t $(REGISTRY)/$(REPOSITORY):$(TAG) \
 		--platform linux/$(ARCH) -f build/Containerfile .
 
+.PHONY: image-ci
+image-ci:
+	$(CONTAINER_RUNTIME) buildx build \
+		-t $(REGISTRY)/$(REPOSITORY):$(TAG) \
+		--platform linux/$(ARCH) -f build/Containerfile-build .
+
 .PHONY: push
 push:
 	$(info push Container image...)
+	$(CONTAINER_RUNTIME) push $(REGISTRY)/$(REPOSITORY):$(TAG)
+
+.PHONY: push-ci
+push:
+	$(info push ci Container image...)
 	$(CONTAINER_RUNTIME) push $(REGISTRY)/$(REPOSITORY):$(TAG)
 
 ########################################################################
