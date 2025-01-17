@@ -29,7 +29,7 @@ spec:
             memory: 100Mi
             power-dev-plugin/dev: 1
         volumeMounts:
-        - name: host-mnt
+        - name: test-vol
           mountPath: /mnt
         serviceAccount: ex-sa
         serviceAccountName: ex-sa
@@ -46,9 +46,8 @@ spec:
       serviceAccount: ex-sa
       serviceAccountName: ex-sa
       volumes:
-       - name: host-mnt
-         hostPath:
-           path: /mnt
-           type: Directory
+        - name: test-vol
+          persistentVolumeClaim:
+            claimName: vol-test
   updateStrategy:
     type: RollingUpdate

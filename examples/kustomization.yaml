@@ -14,4 +14,5 @@ resources:
   - 00-project.yaml
   - 01-sa.yaml
   - 02-rbac.yaml
-  - 03-deployment.yaml
+  - 03-pvc.yaml
+  - 04-deployment.yaml

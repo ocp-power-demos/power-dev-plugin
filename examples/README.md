@@ -1,0 +1,1 @@
+oc adm policy add-scc-to-user anyuid -z anyuid --as=system:admin
