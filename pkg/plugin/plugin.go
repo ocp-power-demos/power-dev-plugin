@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	resourceName = "ibm.com/power-dev"
+	resourceName = "power-dev.csi.ibm.com/block"
 	// SockDir is the default Kubelet device plugin socket directory
 	SockDir    = pluginapi.DevicePluginPath
-	pSocket    = "power-dev.sock"
+	pSocket    = "power-dev.csi.ibm.com-reg.sock"
 	serverSock = SockDir + pSocket
 	unix       = "unix"
 )
@@ -67,7 +67,7 @@ func dial() (*grpc.ClientConn, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		klog.Errorf("%s device plugin unable connect to Kubelet : %v", serverSock, err)
+		klog.Errorf("%s device plugin unable connect to Kubelet : %v", pluginapi.KubeletSocket, err)
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	request := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
 		Endpoint:     pSocket,
-		ResourceName: fmt.Sprintf("%s/%s", "power-dev-plugin", "dev"),
+		ResourceName: resourceName,
 	}
 
 	_, err = client.Register(context.Background(), request)
