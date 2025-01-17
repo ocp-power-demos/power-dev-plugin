@@ -1,3 +1,19 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package plugin
 
 import (
@@ -8,6 +24,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/jaypipes/ghw"
 	"google.golang.org/grpc"
@@ -17,12 +34,13 @@ import (
 )
 
 const (
-	resourceName = "power-dev.csi.ibm.com/block"
-	// SockDir is the default Kubelet device plugin socket directory
-	SockDir    = pluginapi.DevicePluginPath
-	pSocket    = "power-dev.csi.ibm.com-reg.sock"
-	serverSock = SockDir + pSocket
-	unix       = "unix"
+	socketFile                 = "power-dev.csi.ibm.com-reg.sock"
+	socket                     = pluginapi.DevicePluginPath + socketFile
+	resource                   = "power-dev-plugin/dev" // TODO: convert to use power-dev.csi.ibm.com/block"
+	watchInterval              = 1 * time.Second
+	preStartContainerFlag      = false
+	getPreferredAllocationFlag = false
+	unix                       = "unix"
 )
 
 // DevicePluginServer is a mandatory interface that must be implemented by all plugins.
@@ -46,14 +64,14 @@ func New() (*PowerPlugin, error) {
 	var devs []string = []string{}
 	return &PowerPlugin{
 		devs:   devs,
-		socket: serverSock,
+		socket: socket,
 		stop:   make(chan interface{}),
 		health: make(chan *pluginapi.Device),
 	}, nil
 }
 
 // no-action needed to get options
-func (m *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
+func (p *PowerPlugin) GetDevicePluginOptions(context.Context, *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
 	return &pluginapi.DevicePluginOptions{
 		PreStartRequired:                false,
 		GetPreferredAllocationAvailable: false,
@@ -75,36 +93,45 @@ func dial() (*grpc.ClientConn, error) {
 }
 
 // Start starts the gRPC server of the device plugin
-func (m *PowerPlugin) Start() error {
-	err := m.cleanup()
+func (p *PowerPlugin) Start() error {
+	devices, err := ScanRootForDevices()
 	if err != nil {
+		klog.Errorf("Scan root for devices was unsuccessful during ListAndWatch: %v", err)
 		return err
 	}
 
-	sock, err := net.Listen("unix", m.socket)
+	p.devs = devices
+	klog.Infof("Initiatlizing the devices recorded with the plugin to: %v", p.devs)
+
+	errx := p.cleanup()
+	if errx != nil {
+		return errx
+	}
+
+	sock, err := net.Listen("unix", p.socket)
 	if err != nil {
 		klog.Errorf("failed to listen on socket: %s", err.Error())
 		return err
 	}
 
-	m.server = grpc.NewServer()
-	pluginapi.RegisterDevicePluginServer(m.server, m)
+	p.server = grpc.NewServer()
+	pluginapi.RegisterDevicePluginServer(p.server, p)
 
 	// start serving from grpcServer
 	go func() {
-		err := m.server.Serve(sock)
+		err := p.server.Serve(sock)
 		if err != nil {
 			klog.Errorf("serving incoming requests failed: %s", err.Error())
 		}
 	}()
 
 	// Wait for server to start by launching a blocking connection
-	// conn, err := dial(m.socket, 10*time.Second)
-	// if err != nil {
-	// 	klog.Errorf("unable to dial %v", err)
-	// 	return err
-	// }
-	// conn.Close()
+	conn, err := dial()
+	if err != nil {
+		klog.Errorf("unable to dial %v", err)
+		return err
+	}
+	conn.Close()
 
 	// go m.healthcheck()
 
@@ -112,19 +139,19 @@ func (m *PowerPlugin) Start() error {
 }
 
 // Stop stops the gRPC server
-func (m *PowerPlugin) Stop() error {
-	if m.server == nil {
+func (p *PowerPlugin) Stop() error {
+	if p.server == nil {
 		return nil
 	}
-	m.server.Stop()
-	m.server = nil
-	close(m.stop)
+	p.server.Stop()
+	p.server = nil
+	close(p.stop)
 
-	return m.cleanup()
+	return p.cleanup()
 }
 
 // Registers the device plugin for the given resourceName with Kubelet.
-func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
+func (p *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	conn, err := dial()
 	//defer conn.Close()
 	if err != nil {
@@ -135,7 +162,7 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 	client := pluginapi.NewRegistrationClient(conn)
 	request := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
-		Endpoint:     pSocket,
+		Endpoint:     socketFile,
 		ResourceName: resourceName,
 	}
 
@@ -148,39 +175,41 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 }
 
 // Lists devices and update that list according to the health status
-func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	klog.Infof("Listing devices: %v", m.devs)
+func (p *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
+	klog.Infof("Listing devices: %v", p.devs)
 
-	if len(m.devs) == 0 {
+	if len(p.devs) == 0 {
 		devices, err := ScanRootForDevices()
 		if err != nil {
 			klog.Errorf("Scan root for devices was unsuccessful during ListAndWatch: %v", err)
 			return err
-		} else {
-			klog.Infof("Updating the devices to: %v", m.devs)
-			m.devs = devices
 		}
+
+		p.devs = devices
+		klog.Infof("Updating the devices to %d total devices", len(p.devs))
 	}
 
-	stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
+	pluginDevices := convertDeviceToPluginDevices(p.devs)
+	klog.Infof("PluginDevices are: %s", pluginDevices)
+
+	stream.Send(&pluginapi.ListAndWatchResponse{Devices: pluginDevices})
 
 	for {
 		select {
-		case <-m.stop:
+		case <-p.stop:
 			klog.Infoln("Told to Stop...")
 			return nil
-		case d := <-m.health:
+		case d := <-p.health:
 			//ignoring unhealthy state.
 			klog.Infoln("Checking the health")
 			d.Health = pluginapi.Healthy
-			stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
-			// stream.Send(&pluginapi.ListAndWatchResponse{Devices: []*pluginapi.Device{}})
+			stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(p.devs)})
 		}
 	}
 }
 
 // Allocate which return list of devices.
-func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
+func (p *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	klog.Infof("Allocate request: %v", reqs)
 
 	devices, err := ScanRootForDevices()
@@ -218,7 +247,7 @@ func (m *PowerPlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequ
 }
 
 func convertDeviceToPluginDevices(devS []string) []*pluginapi.Device {
-	klog.Infoln("Converting Devices to Plugin Devices")
+	klog.Infof("Converting Devices to Plugin Devices - %d", len(devS))
 	devs := []*pluginapi.Device{}
 	for idx := range devS {
 		devs = append(devs, &pluginapi.Device{
@@ -230,35 +259,36 @@ func convertDeviceToPluginDevices(devS []string) []*pluginapi.Device {
 	return devs
 }
 
-func (m *PowerPlugin) unhealthy(dev *pluginapi.Device) {
-	m.health <- dev
+func (p *PowerPlugin) unhealthy(dev *pluginapi.Device) {
+	p.health <- dev
 }
 
 // no-action needed to configure/load et cetra
-func (m *PowerPlugin) PreStartContainer(context.Context, *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
+func (p *PowerPlugin) PreStartContainer(context.Context, *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
 	return &pluginapi.PreStartContainerResponse{}, nil
 }
 
-func (m *PowerPlugin) cleanup() error {
-	if err := os.Remove(m.socket); err != nil && !os.IsNotExist(err) {
+// It's restarted, and we need to cleanup... conditionally...
+func (p *PowerPlugin) cleanup() error {
+	if err := os.Remove(p.socket); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return nil
 }
 
 // Serve starts the gRPC server and register the device plugin to Kubelet
-func (m *PowerPlugin) Serve() error {
-	err := m.Start()
+func (p *PowerPlugin) Serve() error {
+	err := p.Start()
 	if err != nil {
 		klog.Errorf("Could not start device plugin: %v", err)
 		return err
 	}
-	klog.Infof("Starting to serve on %s", m.socket)
+	klog.Infof("Starting to serve on %s", p.socket)
 
-	err = m.Register(pluginapi.KubeletSocket, resourceName)
+	err = p.Register(pluginapi.KubeletSocket, resource)
 	if err != nil {
 		klog.Errorf("Could not register device plugin: %v", err)
-		m.Stop()
+		p.Stop()
 		return err
 	}
 	klog.Infof("Registered device plugin with Kubelet")
@@ -328,6 +358,44 @@ func ScanRootForDevices() ([]string, error) {
 			fmt.Printf("        - PART: %v\n", part.Disk.Name)
 			devices = append(devices, part.Name)
 		}
+		devices = append(devices, disk.Name)
 	}
 	return devices, nil
+}
+
+func (m *PowerPlugin) GetAllocateFunc() func(r *pluginapi.AllocateRequest, devs map[string]pluginapi.Device) (*pluginapi.AllocateResponse, error) {
+	return func(r *pluginapi.AllocateRequest, devs map[string]pluginapi.Device) (*pluginapi.AllocateResponse, error) {
+		devices, err := ScanRootForDevices()
+		if err != nil {
+			klog.Errorf("Scan root for devices was unsuccessful: %v", err)
+			return nil, err
+		}
+
+		var responses pluginapi.AllocateResponse
+		for _, req := range r.ContainerRequests {
+
+			klog.V(5).Infof("Container Request: %s", req)
+			response := &pluginapi.ContainerAllocateResponse{}
+
+			// Dev: DevicesIDs and health are ignore. We are granting access to all devices needed.
+
+			// Originally req.DeviceIds
+			for i := range devices {
+				response.Devices = append(response.Devices, &pluginapi.DeviceSpec{
+					HostPath:      "/dev/" + devices[i],
+					ContainerPath: "/dev/" + devices[i],
+					// Per DeviceSpec:
+					// Cgroups permissions of the device, candidates are one or more of
+					// * r - allows container to read from the specified device.
+					// * w - allows container to write to the specified device.
+					// * m - allows container to create device files that do not yet exist.
+					// We don't need `m`
+					Permissions: "rw",
+				})
+			}
+
+			responses.ContainerResponses = append(responses.ContainerResponses, response)
+		}
+		return &responses, nil
+	}
 }
