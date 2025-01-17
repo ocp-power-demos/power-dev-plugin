@@ -3,7 +3,7 @@ ARCH ?= ppc64le
 
 REGISTRY ?= quay.io/powercloud
 REPOSITORY ?= power-dev-plugin
-TAG ?= latest
+TAG ?= main
 
 CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 
@@ -13,13 +13,14 @@ CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 .PHONY: build
 build: fmt vet
 	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-plugin cmd/power-dev-plugin/main.go
-	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dev-webhook cmd/webhook/main.go
 
+# darwin build is only for development purposes
 .PHONY: build-plugin
 build-plugin: fmt vet
 	GOOS=linux GOARCH=amd64 go build -o bin/power-dev-plugin-x86_64 cmd/power-dev-plugin/main.go
 	GOOS=linux GOARCH=ppc64le go build -o bin/power-dev-plugin-ppc64le cmd/power-dev-plugin/main.go
 	GOOS=linux GOARCH=s390x go build -o bin/power-dev-plugin-s390x cmd/power-dev-plugin/main.go
+	GOOS=darwin GOARCH=arm64 go build -o bin/power-dev-plugin-arm64 cmd/power-dev-plugin/main.go
 
 .PHONY: build-scanner
 build-scanner: fmt vet
@@ -59,9 +60,13 @@ push:
 	$(CONTAINER_RUNTIME) push $(REGISTRY)/$(REPOSITORY):$(TAG)
 
 .PHONY: push-ci
-push:
+push-ci:
 	$(info push ci Container image...)
 	$(CONTAINER_RUNTIME) push $(REGISTRY)/$(REPOSITORY):$(TAG)
+
+# target builds, creates an image and pushes
+.PHONY: all-ci
+all-ci: build-plugin image-ci push-ci
 
 ########################################################################
 # Deployment Targets

@@ -41,6 +41,8 @@ spec:
           runAsNonRoot: true
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
       serviceAccount: ex-sa
       serviceAccountName: ex-sa
       volumes:

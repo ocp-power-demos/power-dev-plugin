@@ -65,6 +65,5 @@ WORKDIR /
 
 COPY ./build/entrypoint.sh /
 COPY --from=builder /workspace/bin/power-dev-plugin /opt/power-dev-plugin/bin/
-COPY --from=builder /workspace/bin/power-dev-webhook /opt/power-dev-plugin/bin/
 
 ENTRYPOINT ["/entrypoint.sh"]

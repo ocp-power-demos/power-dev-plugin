@@ -85,6 +85,48 @@ power-device-plugin-zkxkz          1m           20Mi
 The build includes multiple architectures: `linux/amd64`, `linux/ppc64le`, `linux/s390x`.
 The build uses the [ubi9/ubi:9.4](https://catalog.redhat.com/software/containers/ubi9/ubi/615bcf606feffc5384e8452e?architecture=ppc64le&image=676258d7607921b4d7fcb8c8&gti-tabs=unauthenticated) image.
 
+## Bugs
+
+### kubelet issues
+```
+Jan 01 16:25:32 worker-0 kubenswrapper[36781]: E0117 16:25:32.788348   36781 client.go:90] "ListAndWatch ended unexpectedly for device plugin" err="rpc error: code = Unavailable desc = error reading from server: EOF" resource="power-dev-plugin/dev"
+```
+indicates a problem with the socket and you'll want to enable logging per [Editing kubelet log level verbosity and gathering logs](https://docs.openshift.com/container-platform/4.8/rest_api/editing-kubelet-log-level-verbosity.html)
+
+Command is... 
+```
+echo -e "[Service]\nEnvironment=\"KUBELET_LOG_LEVEL=8\"" > /etc/systemd/system/kubelet.service.d/30-logging.conf
+```
+
+You should see why it's failing there.
+
+### Checking Allocations
+
+```
+# oc describe nodes | grep power-dev-pl
+  power-dev-plugin/dev:         742
+  power-dev-plugin/dev:         742
+  power-dev-plugin/dev         0               0
+  power-dev-plugin/dev:         742
+  power-dev-plugin/dev:         742
+  power-dev-plugin/dev         1            1
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev         0               0
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev         0               0
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev         0               0
+  power-dev-plugin/dev:         0
+  power-dev-plugin/dev:         0
+  power-dev-plugin/dev         0               0
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev:         928
+  power-dev-plugin/dev         0               0
+```
+
 ## Sources
 
 1. https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/pkg/deviceplugin/manager.go#L96
