@@ -1,0 +1,1 @@
+Generate cdi generates the cdi_spec definition that is used to do container edits

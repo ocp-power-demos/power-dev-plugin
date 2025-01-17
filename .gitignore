@@ -1,4 +1,5 @@
 *
+!cdi/*.sh
 
 # But not these files...
 !/.gitignore
