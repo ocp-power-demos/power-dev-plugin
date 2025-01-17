@@ -1,1 +1,1 @@
-oc adm policy add-scc-to-user anyuid -z anyuid --as=system:admin
+You will need to change `storageclass-tbd` in 03-pvc.yaml to work with your storageclass.

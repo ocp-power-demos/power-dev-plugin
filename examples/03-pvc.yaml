@@ -9,5 +9,5 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: ibm-spectrum-scale-data-rwo-sc
+  storageClassName: storageclass-tbd
   volumeMode: Filesystem
