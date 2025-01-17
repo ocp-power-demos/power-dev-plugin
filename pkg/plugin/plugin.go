@@ -149,7 +149,7 @@ func (m *PowerPlugin) Register(kubeletEndpoint, resourceName string) error {
 
 // Lists devices and update that list according to the health status
 func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	klog.Infof("Exposing devices: %v", m.devs)
+	klog.Infof("Listing devices: %v", m.devs)
 
 	if len(m.devs) == 0 {
 		devices, err := ScanRootForDevices()
@@ -167,12 +167,14 @@ func (m *PowerPlugin) ListAndWatch(e *pluginapi.Empty, stream pluginapi.DevicePl
 	for {
 		select {
 		case <-m.stop:
+			klog.Infoln("Told to Stop...")
 			return nil
 		case d := <-m.health:
 			//ignoring unhealthy state.
 			klog.Infoln("Checking the health")
 			d.Health = pluginapi.Healthy
-			stream.Send(&pluginapi.ListAndWatchResponse{Devices: []*pluginapi.Device{}})
+			stream.Send(&pluginapi.ListAndWatchResponse{Devices: convertDeviceToPluginDevices(m.devs)})
+			// stream.Send(&pluginapi.ListAndWatchResponse{Devices: []*pluginapi.Device{}})
 		}
 	}
 }
