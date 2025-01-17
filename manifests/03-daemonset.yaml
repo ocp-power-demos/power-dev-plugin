@@ -30,12 +30,12 @@ spec:
         image: quay.io/powercloud/power-dev-plugin:main
         imagePullPolicy: IfNotPresent
         command: [ "/opt/power-dev-plugin/bin/power-dev-plugin" ]
-        #args: [ "infinity" ]
-        #env:
-        # - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        #   value: "99"
-        # - name: GRPC_GO_LOG_SEVERITY_LEVEL
-        #   value: "info"
+        # Once this goes into production, we can turn the logging off
+        env:
+        - name: GRPC_GO_LOG_VERBOSITY_LEVEL
+          value: "99"
+        - name: GRPC_GO_LOG_SEVERITY_LEVEL
+          value: "info"
         resources:
           limits:
             memory: 100Mi
@@ -58,7 +58,7 @@ spec:
         - name: host-sys
           mountPath: /host/sys
         - name: dev-plugins-reg
-          mountPath: /var/lib/kubelet/plugins_registry
+          mountPath: /registration
         - name: dev-plugins
           mountPath: /var/lib/kubelet/device-plugins
         serviceAccount: power-device-plugin
@@ -75,7 +75,7 @@ spec:
               - ALL
           runAsUser: 0
           runAsNonRoot: false
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: true
       volumes:
        - name: host-sys
