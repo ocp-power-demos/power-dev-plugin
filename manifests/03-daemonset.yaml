@@ -46,12 +46,16 @@ spec:
         - containerPort: 8080
           name: http
         livenessProbe:
-          grpc:
-            port: 8080
+          exec:
+            command:
+            - cat
+            - /var/lib/kubelet/device-plugins/power-dev.csi.ibm.com-reg.sock
           initialDelaySeconds: 10
         readinessProbe:
-          grpc:
-            port: 8080
+          exec:
+            command:
+            - cat
+            - /var/lib/kubelet/device-plugins/power-dev.csi.ibm.com-reg.sock
           initialDelaySeconds: 5
           failureThreshold: 10
         volumeMounts:
