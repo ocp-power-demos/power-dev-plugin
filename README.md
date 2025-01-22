@@ -1,3 +1,5 @@
+This repo is now archived. Go to https://github.com/IBM/power-device-plugin
+
 # Power Device Plugin
 
 Power Device Plugin to add protected devices into a non-privileged container. The Power Device Plugin uses the [Kubernetes Device Plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/) in order to add specific devices to the given Pod.
